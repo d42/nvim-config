@@ -1,0 +1,36 @@
+" colorscheme onedark
+" colorscheme Tomorrow-Night-Eighties
+set mouse=a
+
+" Set Editor Font
+if exists(':GuiFont')
+    " Use GuiFont! to ignore font errors
+    GuiFont FiraMono Nerd Font:h12:l
+endif
+
+" Disable GUI Tabline
+if exists(':GuiTabline')
+    GuiTabline 0
+endif
+
+" Disable GUI Popupmenu
+if exists(':GuiPopupmenu')
+    GuiPopupmenu 0
+endif
+
+" Enable GUI ScrollBar
+if exists(':GuiScrollBar')
+    GuiScrollBar 0
+endif
+
+" Right Click Context Menu (Copy-Cut-Paste)
+nnoremap <silent><RightMouse> :call GuiShowContextMenu()<CR>
+inoremap <silent><RightMouse> <Esc>:call GuiShowContextMenu()<CR>
+vnoremap <silent><RightMouse> :call GuiShowContextMenu()<CR>gv
+
+set title
+
+augroup dirchange
+    autocmd!
+    autocmd DirChanged * let &titlestring=v:event['cwd']
+augroup END
