@@ -14,3 +14,4 @@ let g:indent_guides_exclude_filetypes = ['help', 'nerdtree']
 
 local set = vim.opt
 set.laststatus      = 3
+require'nvim-tree'.setup {}
