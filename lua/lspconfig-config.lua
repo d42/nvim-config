@@ -1,135 +1,105 @@
 local nvim_lsp = require('lspconfig')
-local lsp_installer = require("nvim-lsp-installer")
 local cmp = require('cmp')
 local navic = require("nvim-navic")
--- local coq = require("coq")
+require('fidget').setup()
+require('neodev').setup()
 
 -- Use an on_attach function to only map the following keys
 -- after the language server attaches to the current buffer
-local on_attach = function(client, bufnr)
-  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-  if client.server_capabilities.documentSymbolProvider then
-      navic.attach(client, bufnr)
-  end
-
-  -- Enable completion triggered by <c-x><c-o>
-  buf_set_option('omnifunc', 'v:lua.vim.lsp.omnifunc')
-
-  if client.name == "pylsp" then
-      -- print(vim.inspect(client.name))
-
-      client.resolved_capabilities.rename = false
-    end
-
-
-  -- Mappings.
-  local opts = { noremap=true, silent=true }
-
-  -- See `:help vim.lsp.*` for documentation on any of the below functions
-  buf_set_keymap('n', 'gD', '<cmd>lua vim.lsp.buf.declaration()<CR>', opts)
-  buf_set_keymap('n', 'gd', '<cmd>lua vim.lsp.buf.definition()<CR>', opts)
-  buf_set_keymap('n', 'K', '<cmd>lua vim.lsp.buf.hover()<CR>', opts)
-  buf_set_keymap('n', 'gi', '<cmd>lua vim.lsp.buf.implementation()<CR>', opts)
-  buf_set_keymap('n', '<C-k>', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
-  buf_set_keymap('n', '<space>wa', '<cmd>lua vim.lsp.buf.add_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<space>wr', '<cmd>lua vim.lsp.buf.remove_workspace_folder()<CR>', opts)
-  buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
-  buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
-  buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-  buf_set_keymap('n', '<space>ca', '<cmd>Telescope lsp_code_actions()<CR>', opts)
-  buf_set_keymap('n', 'gr', '<cmd>Telescope lsp_references<CR>', opts)
-  -- buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
-  buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
-  buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
-  buf_set_keymap('n', ']d', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
-  buf_set_keymap('n', '<space>q', '<cmd>Telescope diagnostics bufnr=0<CR>', opts)
-  buf_set_keymap('n', '<space>f', '<cmd>lua vim.lsp.buf.formatting()<CR>', opts)
-
-
-  buf_set_keymap('n', '<leader>f', '<cmd>Telescope find_files<CR>', opts)
-  buf_set_keymap('n', '<leader>F', '<cmd>Telescope grep_string<CR>', opts)
-  buf_set_keymap('n', '<leader>b', '<cmd>Telescope buffers<CR>', opts)
-
-  require "lsp_signature".on_attach()
-
-end
-
-
+--
+--
 local venv_path = nil
 if os.getenv("VIRTUAL_ENV") then
   venv_path = os.getenv("VIRTUAL_ENV") .. "/bin/python"
   -- print(venv_path)
 end
+lspconfig = require("lspconfig")
 
--- print(os.getenv("VIRTUAL_ENV"))
+local on_attach = function(client, bufnr)
+  -- NOTE: Remember that lua is a real programming language, and as such it is possible
+  -- to define small helper and utility functions so you don't have to repeat yourself
+  -- many times.
+  --
+  -- In this case, we create a function that lets us more easily define mappings specific
+  -- for LSP related items. It sets the mode, buffer and description for us each time.
 
-
--- Register a handler that will be called for all installed servers.
--- Alternatively, you may also register handlers on specific server instances instead (see example below).
-lsp_installer.on_server_ready(function(server)
-  local opts = {
-    on_attach=on_attach,
-  }
-  if server.name == 'sumneko_lua' then
-    opts.settings = {
-    Lua = {
-      diagnostics = {
-        globals = { 'vim' }
-      },
-      workspace = {
-        -- Make the server aware of Neovim runtime files
-        library = vim.api.nvim_get_runtime_file("", true),
-      },
-      -- Do not send telemetry data containing a randomized but unique identifier
-      telemetry = {
-        enable = false,
-      },
-  }}
-
+  if client.server_capabilities.documentSymbolProvider then
+      navic.attach(client, bufnr)
   end
 
-  if server.name == 'pyright' then
-    if (venv_path ~= nil) then
-      opts.settings = {
-        python = {
-          pythonPath = venv_path
-        }
-      }
+  local nmap = function(keys, func, desc)
+    if desc then
+      desc = 'LSP: ' .. desc
     end
+
+    vim.keymap.set('n', keys, func, { buffer = bufnr, desc = desc })
   end
 
-  local capabilities = require('cmp_nvim_lsp').default_capabilities(vim.lsp.protocol.make_client_capabilities())
-  if server.name == 'pylsp' then
-    if( venv_path ~= nil) then
-      opts.settings = {
-        pylsp = {
-          plugins = {
-            pylsp_mypy = {
-              enabled = true,
-              overrides = {"--python-executable", venv_path .. "/bin/python", true},
-          },
-          flake8 = {
-            executable = "flake518",
-          },
-        }
-      }
-    }
-    end
-  end
-  opts.capabilities = capabilities
-  server:setup(
-    opts
-  )
+  nmap('<space>rn', vim.lsp.buf.rename, '[R]e[n]ame')
+  nmap('<space>ca', vim.lsp.buf.code_action, '[C]ode [A]ction')
+
+  nmap('gd', vim.lsp.buf.definition, '[G]oto [D]efinition')
+  nmap('gD', vim.lsp.buf.type_definition, 'Type [D]efinition')
+  nmap('gr', require('telescope.builtin').lsp_references, '[G]oto [R]eferences')
+  nmap('gi', vim.lsp.buf.implementation, '[G]oto [I]mplementation')
+  nmap('<space>ds', require('telescope.builtin').lsp_document_symbols, '[D]ocument [S]ymbols')
+  nmap('<space>ws', require('telescope.builtin').lsp_dynamic_workspace_symbols, '[W]orkspace [S]ymbols')
+  nmap('<space>rn', vim.lsp.buf.rename, "[R]e[N]ame")
+  -- nmap('<space>e', vim.lsp.diagnostic.show_line_diagnostic, "Lin[E] Diagnostics")
+
+  nmap('<leader>f', require('telescope.builtin').find_files, "[F]ind files")
+  nmap('<leader>F', require('telescope.builtin').grep_string, "[F]ind Strings")
+  nmap('<leader>b', require('telescope.builtin').buffers, "[B]uffers")
+
+  -- See `:help K` for why this keymap
+  nmap('K', vim.lsp.buf.hover, 'Hover Documentation')
+  nmap('<C-k>', vim.lsp.buf.signature_help, 'Signature Documentation')
+
+  -- Lesser used LSP functionality
+  nmap('<space>D', vim.lsp.buf.declaration, '[G]oto [D]eclaration')
+  nmap('<leader>wa', vim.lsp.buf.add_workspace_folder, '[W]orkspace [A]dd Folder')
+  nmap('<leader>wr', vim.lsp.buf.remove_workspace_folder, '[W]orkspace [R]emove Folder')
+  nmap('<leader>wl', function()
+    print(vim.inspect(vim.lsp.buf.list_workspace_folders()))
+  end, '[W]orkspace [L]ist Folders')
+
+  -- Create a command `:Format` local to the LSP buffer
+  vim.api.nvim_buf_create_user_command(bufnr, 'Format', function(_)
+    vim.lsp.buf.format()
+  end, { desc = 'Format current buffer with LSP' })
+
+  require "lsp_signature".on_attach()
 end
-)
--- vim.cmd("COQnow --shut-up")S
---
---
-  cmp.setup({
-    view = {
-      entries = "native",
+
+
+
+local servers = {
+  clangd = {},
+  gopls = {},
+  pyright = {
+    python = {
+      pythonPath = venv_path
+    }
+  },
+  rust_analyzer = {},
+  tsserver = {},
+  tailwindcss = {},
+  emmet_ls = {},
+  sumneko_lua = {
+    Lua = {
+      workspace = { checkThirdParty = false },
+      telemetry = { enable = false },
     },
+  }
+}
+
+local has_words_before = function()
+  local line, col = unpack(vim.api.nvim_win_get_cursor(0))
+  return col ~= 0 and vim.api.nvim_buf_get_lines(0, line - 1, line, true)[1]:sub(col, col):match("%s") == nil
+end
+
+local luasnip = require("luasnip")
+  cmp.setup({
     completion = {
       autocomplete = true,
     },
@@ -146,12 +116,8 @@ end
       },
     },
     snippet = {
-      -- REQUIRED - you must specify a snippet engine
       expand = function(args)
-        -- vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
         require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
-        -- require('snippy').expand_snippet(args.body) -- For `snippy` users.
-        -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
       end,
     },
     mapping = {
@@ -164,16 +130,35 @@ end
         c = cmp.mapping.close(),
       }),
       ['<CR>'] = cmp.mapping.confirm({ select = true }), -- Accept currently selected item. Set `select` to `false` to only confirm explicitly selected items.
+
+    ["<Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_next_item()
+      elseif luasnip.expand_or_jumpable() then
+        luasnip.expand_or_jump()
+      elseif has_words_before() then
+        cmp.complete()
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+
+    ["<S-Tab>"] = cmp.mapping(function(fallback)
+      if cmp.visible() then
+        cmp.select_prev_item()
+      elseif luasnip.jumpable(-1) then
+        luasnip.jump(-1)
+      else
+        fallback()
+      end
+    end, { "i", "s" }),
+
     },
     sources = {
       { name = 'nvim_lsp' },
-      -- { name = 'vsnip' }, -- For vsnip users.
       { name = 'luasnip' }, -- For luasnip users.
-      -- { name = 'ultisnips' }, -- For ultisnips users.
-      -- { name = 'snippy' }, -- For snippy users.
     {
       name = 'buffer',
-      -- Correct:
       option = {
         keyword_pattern = [[\k\+]],
       }
@@ -246,50 +231,30 @@ end
 
 
 
-vim.api.nvim_set_keymap("i", "<Tab>", "v:lua.tab_complete()", {expr = true})
-vim.api.nvim_set_keymap("s", "<Tab>", "v:lua.tab_complete()", {expr = true})
-vim.api.nvim_set_keymap("i", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
-vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
+-- vim.api.nvim_set_keymap("i", "<Tab>", "v:lua.tab_complete()", {expr = true})
+-- vim.api.nvim_set_keymap("s", "<Tab>", "v:lua.tab_complete()", {expr = true})
+-- vim.api.nvim_set_keymap("i", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
+-- vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
 vim.api.nvim_set_keymap("i", "<C-E>", "<Plug>luasnip-next-choice", {})
 vim.api.nvim_set_keymap("s", "<C-E>", "<Plug>luasnip-next-choice", {})
 
-require('luasnip.loaders.from_vscode').lazy_load()
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities = require('cmp_nvim_lsp').default_capabilities(capabilities)
 
-require "lsp_signature".on_attach({
-    bind = true,
-    floating_window = true,
-    floating_window_above_cur_line = true,
-    fix_pos = false,
-    hint_enable = true,
-    hint_prefix = " ",
-    hint_scheme = "String",
-    use_lspsaga = false,
-    hi_parameter = "ModeMsg",
-    max_height = 12,
-    max_width = 120,
-    -- transparency = 80,
-    handler_opts = { border = "none" },
-    trigger_on_newline = false,
-    debug = false,
-    padding = '',
-    -- shadow_blend = 36,
-    -- shadow_guibg = 'Black',
-    timer_interval = 200,
-    toggle_key = '<M-f>',
-})
+require("mason").setup()
+local mason_lspconfig = require("mason-lspconfig")
 
-require "lspconfig".efm.setup {
-    init_options = {documentFormatting = true},
-    settings = {
-        rootMarkers = {".git/"},
-        languages = {
-            lua = {
-                {formatCommand = "lua-format -i", formatStdin = true}
-            },
-            python = {
-                {formatCommand = "black --quiet -SC -", formatStdin = true},
-                {formatCommand = "isort --quiet -", formatStdin = true}
-            }
-        }
-    }
+mason_lspconfig.setup {
+    ensure_installed = vim.tbl_keys(servers)
 }
+mason_lspconfig.setup_handlers {
+  function(server_name)
+    require('lspconfig')[server_name].setup {
+      capabilities = capabilities,
+      on_attach = on_attach,
+      settings = servers[server_name],
+    }
+  end,
+}
+
+require('luasnip.loaders.from_vscode').lazy_load()

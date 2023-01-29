@@ -1,26 +1,15 @@
-local ensure_packer = function()
-  local fn = vim.fn
-  local install_path = fn.stdpath('data')..'/site/pack/packer/start/packer.nvim'
-  if fn.empty(fn.glob(install_path)) > 0 then
-    fn.system({'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path})
-    vim.cmd [[packadd packer.nvim]]
-    return true
-  end
-  return false
+-- Install packer
+local install_path = vim.fn.stdpath 'data' .. '/site/pack/packer/start/packer.nvim'
+local is_bootstrap = false
+if vim.fn.empty(vim.fn.glob(install_path)) > 0 then
+  is_bootstrap = true
+  vim.fn.system { 'git', 'clone', '--depth', '1', 'https://github.com/wbthomason/packer.nvim', install_path }
+  vim.cmd [[packadd packer.nvim]]
 end
 
-local packer_bootstrap = ensure_packer()
-
-return require('packer').startup(function(use)
-  -- My plugins here
-  -- use 'foo1/bar1.nvim'
-  -- use 'foo2/bar2.nvim'
-  -- use {'neoclide/coc.nvim', branch = 'release'}
-  -- use {'ms-jpq/chadtree', branch='chad', run='python3 -m chadtree deps'}
-  -- use 'ciaranm/securemodelines'
+require('packer').startup(function(use)
+    use 'wbthomason/packer.nvim'
     use 'mechatroner/rainbow_csv' -- Rainbow CSV - Vim plugin: Highlight columns in CSV and TSV files and run queries in SQL-like language
-    -- use 'tomtom/tcomment_vim'
-    -- use 'terrortylor/nvim-comment'
     use 'numToStr/Comment.nvim'
     use 'lukas-reineke/indent-blankline.nvim' -- This plugin adds indentation guides to all lines (including empty lines).
     use 'lambdalisue/suda.vim'
@@ -79,9 +68,21 @@ return require('packer').startup(function(use)
     use {"p00f/nvim-ts-rainbow"}
 
     -- lsp
-    use "neovim/nvim-lspconfig"
-    use "williamboman/nvim-lsp-installer"
-    use "tamago324/nlsp-settings.nvim"
+      use { -- LSP Configuration & Plugins
+      'neovim/nvim-lspconfig',
+      requires = {
+        -- Automatically install LSPs to stdpath for neovim
+        'williamboman/mason.nvim',
+        'williamboman/mason-lspconfig.nvim',
+
+        -- Useful status updates for LSP
+        'j-hui/fidget.nvim',
+
+        -- Additional lua configuration, makes nvim stuff amazing
+        'folke/neodev.nvim',
+      },
+    }
+  --
     use 'honza/vim-snippets'
 
     use {
@@ -93,12 +94,22 @@ return require('packer').startup(function(use)
     use 'hrsh7th/cmp-buffer'
     use 'hrsh7th/cmp-path'
     use 'hrsh7th/cmp-cmdline'
-    use 'hrsh7th/nvim-cmp'
+    use { -- Autocompletion
+      'hrsh7th/nvim-cmp',
+      requires = { 'hrsh7th/cmp-nvim-lsp', 'L3MON4D3/LuaSnip', 'saadparwaiz1/cmp_luasnip' },
+    }
     use "lukas-reineke/cmp-under-comparator"
     use "ray-x/lsp_signature.nvim"
     use {'ojroques/vim-oscyank', branch='main'}
     -- use "haringsrob/nvim_context_vt"
     use 'saadparwaiz1/cmp_luasnip'
+    use {
+      "folke/trouble.nvim",
+      requires = "nvim-tree/nvim-web-devicons",
+      config = function()
+        require("trouble").setup {}
+      end
+    }
 
 
     -- DAB YOLO
@@ -130,15 +141,6 @@ return require('packer').startup(function(use)
     use "ray-x/aurora"
     use 'nvim-lualine/lualine.nvim'                                                 -- Fancier statusline
 
-    -- RICE
-    -- use {
-    --   'glepnir/galaxyline.nvim',
-    --     branch = 'main',
-    --     -- your statusline
-    --     config = function() require'my_statusline' end,
-    --     -- some optional icons
-    --     requires = {'kyazdani42/nvim-web-devicons', opt = true}
-    -- }
 
 
     use 'chriskempson/tomorrow-theme'
@@ -149,23 +151,38 @@ return require('packer').startup(function(use)
 
   -- Automatically set up your configuration after cloning packer.nvim
   -- Put this at the end after all plugins
-  if packer_bootstrap then
+  if is_bootstrap then
     require('packer').sync()
-  else
-    require('template-config')
-
-    require('nvim-tree-config')
-
-    require('formatter-config')
-    require('treesitter-config')
-    require('indent-blankline-config')
-    require('lspconfig-config')
-    require('symbols-outline-config')
-    require('telescope-config')
-    require("focus-config")
-    require('dap-config')
-    require('comment-config')
-    require('gitsigns-config')
-    require('lualine-config')
   end
 end)
+
+if is_bootstrap then
+  print '=================================='
+  print '    Plugins are being installed'
+  print '    Wait until Packer completes,'
+  print '       then restart nvim'
+  print '=================================='
+  return
+end
+
+-- Automatically source and re-compile packer whenever you save this init.lua
+local packer_group = vim.api.nvim_create_augroup('Packer', { clear = true })
+vim.api.nvim_create_autocmd('BufWritePost', {
+  command = 'source <afile> | silent! LspStop | silent! LspStart | PackerCompile',
+  group = packer_group,
+  pattern = vim.fn.expand '$MYVIMRC',
+})
+
+require('template-config')
+require('nvim-tree-config')
+require('formatter-config')
+require('treesitter-config')
+require('indent-blankline-config')
+require('lspconfig-config')
+require('symbols-outline-config')
+require('telescope-config')
+require("focus-config")
+require('dap-config')
+require('comment-config')
+require('gitsigns-config')
+require('lualine-config')

@@ -43,10 +43,12 @@ set.inccommand = "split"
 set.mouse = "a"
 
 set.showbreak = "↪"
+set.breakindent = true
 set.linebreak = true
 set.lazyredraw = true
 
 set.wildmenu = true
+set.undofile = true
 
 set.wildignore = set.wildignore + "*.o,*.obj,.git,*.pyc"
 set.wildignore = set.wildignore + "eggs/**"
@@ -54,6 +56,8 @@ set.wildignore = set.wildignore + "*.egg-info/**"
 set.wildignore = set.wildignore + "*.swp,*.bak"
 set.wildignore = set.wildignore + "__pycache__"
 set.wildignorecase = true
+
+set.completeopt = 'menuone,noselect'
 
 set.listchars = "tab:>-,eol:$,trail:-,precedes:<,extends:>"
 set.list = true
@@ -68,3 +72,14 @@ vim.keymap.set('n', 'j', "v:count == 0 ? 'gj' : 'j'", { expr = true, silent = tr
 
 vim.keymap.set('n', '<leader>e', vim.diagnostic.open_float)
 vim.keymap.set('n', '<leader>q', vim.diagnostic.setloclist)
+
+-- [[ Highlight on yank ]]
+-- See `:help vim.highlight.on_yank()`
+local highlight_group = vim.api.nvim_create_augroup('YankHighlight', { clear = true })
+vim.api.nvim_create_autocmd('TextYankPost', {
+  callback = function()
+    vim.highlight.on_yank()
+  end,
+  group = highlight_group,
+  pattern = '*',
+})
