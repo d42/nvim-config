@@ -13,12 +13,19 @@ configs.setup {
     ignore_install = { "" },
     highlight = {
         enable = true,
-        additional_vim_regex_highlighting = true,
+        disable = function(lang, buf)
+            local max_filesize = 100 * 1024 -- 100 KB
+            local ok, stats = pcall(vim.loop.fs_stat, vim.api.nvim_buf_get_name(buf))
+            if ok and stats and stats.size > max_filesize then
+                return true
+            end
+        end,
     },
-    indent = { enable = true, disable = { "python" } },
+    indent = { enable = true, disable = { "python", "html", "javascript", "tsx" } },
     rainbow = {
         enable = true,
         extended_mode = true,
+
         max_file_lines = nil,
     },
     incremental_selection = {
@@ -74,5 +81,5 @@ configs.setup {
         },
     },
 }
-local ft_to_parser = require"nvim-treesitter.parsers".filetype_to_parsername
-ft_to_parser.xml = "html"
+-- local ft_to_parser = require"nvim-treesitter.parsers".filetype_to_parsername
+-- ft_to_parser.xml = "html"

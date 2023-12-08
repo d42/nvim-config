@@ -12,54 +12,65 @@ require('packer').startup(function(use)
     use 'mechatroner/rainbow_csv' -- Rainbow CSV - Vim plugin: Highlight columns in CSV and TSV files and run queries in SQL-like language
     use 'numToStr/Comment.nvim'
     use 'lukas-reineke/indent-blankline.nvim' -- This plugin adds indentation guides to all lines (including empty lines).
-    use 'lambdalisue/suda.vim'
-    use 'folke/which-key.nvim'
-    use 'mhartington/formatter.nvim'
-    use {'glepnir/template.nvim'}
+    use 'lambdalisue/suda.vim' -- 🥪 An alternative sudo.vim for Vim and Neovim
+    use {"Cassin01/wf.nvim", tag = "*", config = function() require("wf").setup() end} -- A modern which-key for neovim
+    -- use 'mhartington/formatter.nvim'
+    -- use {'glepnir/template.nvim'}
+    use { 'kepano/flexoki-neovim', as = 'flexoki' }
+    use { "zootedb0t/citruszest.nvim" }
     use {
         "catppuccin/nvim",
         as = "catppuccin",
         config = function()
+            -- require("catppuccin").setup({
+            --   integrations = {
+            --     gitsigns = true,
+            --     telescope = true,
+            --     native_lsp = {
+            --                 enabled = true,
+            --                 virtual_text = {
+            --                     errors = { "italic" },
+            --                     hints = { "italic" },
+            --                     warnings = { "italic" },
+            --                     information = { "italic" },
+            --                 },
+            --                 underlines = {
+            --                     errors = { "underline" },
+            --                     hints = { "underline" },
+            --                     warnings = { "underline" },
+            --                     information = { "underline" },
+            --                 },
+            --     },
+            -- }})
             vim.g.catppuccin_flavour = "mocha" -- latte, frappe, macchiato, mocha
-            require("catppuccin").setup({
-              integrations = {
-                gitsigns = true,
-                telescope = true,
-                native_lsp = {
-                            enabled = true,
-                            virtual_text = {
-                                errors = { "italic" },
-                                hints = { "italic" },
-                                warnings = { "italic" },
-                                information = { "italic" },
-                            },
-                            underlines = {
-                                errors = { "underline" },
-                                hints = { "underline" },
-                                warnings = { "underline" },
-                                information = { "underline" },
-                            },
-                },
-            }})
             vim.api.nvim_command "colorscheme catppuccin"
         end
     }
 
 
 
-    use 'nvim-lua/popup.nvim'
-    use 'nvim-lua/plenary.nvim'
-    use 'nvim-telescope/telescope.nvim'
+    -- use 'nvim-lua/popup.nvim'
+    -- use 'nvim-lua/plenary.nvim'
+    -- use 'nvim-telescope/telescope.nvim'
+    use {
+      'nvim-telescope/telescope.nvim', tag = '0.1.3',
+    -- or                            , branch = '0.1.x',
+      requires = { {'nvim-lua/plenary.nvim'} }
+    }
 
 
-    use 'liuchengxu/vista.vim'
+    -- use 'liuchengxu/vista.vim'
 
     use {
       'kyazdani42/nvim-tree.lua',
       requires = {
         'kyazdani42/nvim-web-devicons', -- optional, for file icon
       },
-      config = function() require'nvim-tree'.setup {} end
+      config = function() require'nvim-tree'.setup {
+        renderer = {
+          symlink_destination=false,
+
+          }} end
     }
 
     -- Treesitter
@@ -76,14 +87,20 @@ require('packer').startup(function(use)
         'williamboman/mason-lspconfig.nvim',
 
         -- Useful status updates for LSP
-        'j-hui/fidget.nvim',
+        {'j-hui/fidget.nvim', tag='legacy'},
 
         -- Additional lua configuration, makes nvim stuff amazing
         'folke/neodev.nvim',
       },
     }
   --
-    use 'honza/vim-snippets'
+    -- use 'honza/vim-snippets'
+    use {'jose-elias-alvarez/null-ls.nvim',
+      requires = {
+        'williamboman/mason.nvim',
+        'jay-babu/mason-null-ls.nvim'
+      }
+    }
 
     use {
         "SmiteshP/nvim-navic",
@@ -113,7 +130,7 @@ require('packer').startup(function(use)
 
 
     -- DAB YOLO
-    use 'mfussenegger/nvim-dap'
+    use {'mfussenegger/nvim-dap', requires='jay-babu/mason-nvim-dap.nvim'}
     use 'mfussenegger/nvim-dap-python'
     use 'leoluz/nvim-dap-go'
     use 'rcarriga/nvim-dap-ui'
@@ -186,3 +203,5 @@ require('dap-config')
 require('comment-config')
 require('gitsigns-config')
 require('lualine-config')
+require('keybindings')
+require('mason-config')

@@ -1,10 +1,29 @@
 local navic = require("nvim-navic")
 
+navic.setup {
+    lsp = { auto_attach = true },
+
+}
+
 require('lualine').setup {
   tabline = {
       lualine_c = {
-          { navic.get_location, cond = navic.is_available },
-      }
+            {
+              function()
+                  return navic.get_location()
+              end,
+              cond = function()
+                  return navic.is_available()
+              end
+            },
+        },
+  },
+
+  sections = {
+    lualine_c = {
+      {'filename', path = 1},
+        -- show_filename_only=false,
+    }
   },
   options = {
     icons_enabled = true,
